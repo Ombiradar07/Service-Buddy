@@ -10,9 +10,8 @@ import java.util.List;
 
 @Repository
 public interface AdRepository extends JpaRepository<Ad, Long> {
-    List<Ad> findAllByUserId(Long userId);
 
-    List<Ad> findAllByServiceNameOrDescription(String serviceName, String description);
+    List<Ad> findAllByUserId(Long userId);
 
     @Query("SELECT a FROM Ad a WHERE a.serviceName LIKE %:keyword% OR a.description LIKE %:keyword%")
     List<Ad> searchByKeyword(@Param("keyword") String keyword);

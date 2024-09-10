@@ -23,11 +23,10 @@ public class Ad {
     @Column(name = "price", nullable = false)
     private Double price;
 
-    @Lob
-    @Column(name = "img", columnDefinition="LONGBLOB")
-    private byte[] img;
+    @Column(name = "imgUrl", nullable = false)
+    private String imgUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     private Users user;
-
 }

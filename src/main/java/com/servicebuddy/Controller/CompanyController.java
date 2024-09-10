@@ -4,6 +4,7 @@ import com.servicebuddy.DTO.AdDto;
 import com.servicebuddy.DTO.BookingDto;
 import com.servicebuddy.Enum.BookingStatus;
 import com.servicebuddy.Service.Company.CompanyService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,14 +20,14 @@ public class CompanyController {
     private CompanyService companyService;
 
     @PostMapping("/post-ad/{userId}")
-    public ResponseEntity<AdDto> postAd(@PathVariable long userId, @ModelAttribute AdDto adDto) {
+    public ResponseEntity<AdDto> postAd(@PathVariable Long userId, @Valid @ModelAttribute AdDto adDto) {
 
         AdDto savedDto = companyService.postAd(userId, adDto);
         return new ResponseEntity<>(savedDto, HttpStatus.CREATED);
     }
 
     @PutMapping("update-ad/{adId}")
-    public ResponseEntity<AdDto> updateAd(@PathVariable Long adId, @ModelAttribute AdDto adDto) {
+    public ResponseEntity<AdDto> updateAd(@PathVariable Long adId, @Valid @ModelAttribute AdDto adDto) {
         AdDto updatedAd = companyService.updateAd(adDto, adId);
         return new ResponseEntity<>(updatedAd, HttpStatus.OK);
     }
@@ -61,6 +62,5 @@ public class CompanyController {
         BookingStatus bookingStatus = companyService.changeBookingStatus(bookingId, status);
         return new ResponseEntity<>(bookingStatus, HttpStatus.OK);
     }
-
 
 }

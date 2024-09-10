@@ -14,13 +14,6 @@ import java.util.Date;
 public class JwtUtils {
 
 
-//
-//    @Value("${spring.security.secret.key}")
-//    private SecretKey secretKey;
-//
-//    @Value("${spring.security.token.expiry}")
-//    private long jwtExpirationMs;
-
     private final SecretKey secretKey;
     private final long jwtExpirationMs;
 

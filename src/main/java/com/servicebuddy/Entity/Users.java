@@ -5,8 +5,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
-
 @Getter
 @Setter
 @Entity
@@ -32,7 +30,7 @@ public class Users {
     @Column(name = "address", length = 512)
     private String address;
 
-    private UserRoles role ;
-
-
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private UserRoles role;
 }

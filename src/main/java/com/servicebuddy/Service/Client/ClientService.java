@@ -1,9 +1,6 @@
 package com.servicebuddy.Service.Client;
 
-import com.servicebuddy.DTO.AdDetailsForClientDto;
-import com.servicebuddy.DTO.AdDto;
-import com.servicebuddy.DTO.BookingDto;
-import com.servicebuddy.DTO.ReviewDto;
+import com.servicebuddy.DTO.*;
 
 import java.util.List;
 

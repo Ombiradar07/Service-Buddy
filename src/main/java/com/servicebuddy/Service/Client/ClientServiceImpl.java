@@ -16,6 +16,7 @@ import com.servicebuddy.Repository.AdRepository;
 import com.servicebuddy.Repository.BookingRepository;
 import com.servicebuddy.Repository.ReviewRepository;
 import com.servicebuddy.Repository.UserRepository;
+import com.servicebuddy.Service.Utils.RedisService;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ClientServiceImpl implements ClientService {
@@ -42,22 +44,44 @@ public class ClientServiceImpl implements ClientService {
     @Autowired
     private ReviewRepository reviewRepository;
 
+    private final RedisService redisService;
+
+    @Autowired
+    public ClientServiceImpl(RedisService redisService) {
+        this.redisService = redisService;
+    }
+
+    private static String ALL_ADS_CACHE_KEY = "ALL_ADS";
+
+
     public List<AdDto> getAllAds() {
 
-        List<Ad> all = adRepository.findAll();
-        return all.stream().map(ad -> {
-            AdDto adDto = modelMapper.map(ad, AdDto.class);
-            adDto.setImgResponse(ad.getImg());
-            adDto.setCompanyName(ad.getUser().getName());
-            return adDto;
-        }).toList();
+        List<AdDto> cachedAds = (List<AdDto>) redisService.getData(ALL_ADS_CACHE_KEY);
+
+        if (cachedAds != null) {
+            // If cached, return the cached ads
+            return cachedAds;
+        } else {
+            // If cache is empty, fetch ads from the database
+            List<Ad> allAds = adRepository.findAll();
+            List<AdDto> adDtoList = allAds.stream().map(ad -> {
+                AdDto adDto = modelMapper.map(ad, AdDto.class);
+                adDto.setCompanyName(ad.getUser().getName());
+                return adDto;
+            }).collect(Collectors.toList());
+
+            // Cache the result in Redis with an expiration time (e.g., 60 minutes)
+            redisService.setData(ALL_ADS_CACHE_KEY, adDtoList, 60);
+
+            return adDtoList;
+        }
     }
 
     public List<AdDto> searchAdsByName(String keyword) {
 
         return adRepository.searchByKeyword(keyword).stream().map(ad -> {
             AdDto adDto = modelMapper.map(ad, AdDto.class);
-            adDto.setImgResponse(ad.getImg());
+            adDto.setImgUrl(ad.getImgUrl());
             adDto.setCompanyName(ad.getUser().getName());
             return adDto;
         }).toList();
@@ -87,7 +111,7 @@ public class ClientServiceImpl implements ClientService {
         Ad ad = adRepository.findById(adId).orElseThrow(() -> new ResourceNotFoundException("Ad not found !!!"));
 
         AdDto adDto = modelMapper.map(ad, AdDto.class);
-        adDto.setImgResponse(ad.getImg());
+        adDto.setImgUrl(ad.getImgUrl());
         adDto.setCompanyName(ad.getUser().getName());
 
         AdDetailsForClientDto dto = new AdDetailsForClientDto();
@@ -121,7 +145,7 @@ public class ClientServiceImpl implements ClientService {
         Users user = userRepository.findById(reviewDto.getUserId()).orElseThrow(() -> new ResourceNotFoundException("User not found!"));
 
         // Check if the user is authorized to add a review
-        if (!booking.getUser().getId().equals(user.getId())) {
+        if (!booking.getUser().getId().equals(user.getId()) && !booking.getBookingStatus().equals(BookingStatus.COMPLETED)) {
             throw new UnauthorizedAccessException("User not authorized to add review!");
         }
 

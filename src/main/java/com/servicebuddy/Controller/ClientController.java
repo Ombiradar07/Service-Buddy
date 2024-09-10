@@ -5,6 +5,7 @@ import com.servicebuddy.DTO.AdDto;
 import com.servicebuddy.DTO.BookingDto;
 import com.servicebuddy.DTO.ReviewDto;
 import com.servicebuddy.Service.Client.ClientService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +35,7 @@ public class ClientController {
     }
 
     @PostMapping("/book-service")
-    public ResponseEntity<BookingDto> bookService(@RequestBody BookingDto bookingDto) {
+    public ResponseEntity<BookingDto> bookService(@Valid @RequestBody BookingDto bookingDto) {
 
         BookingDto bookedService = clientService.bookService(bookingDto);
         return new ResponseEntity<>(bookedService, HttpStatus.OK);
@@ -53,8 +54,8 @@ public class ClientController {
 
     }
 
-     @PostMapping("/add-review")
-    public ResponseEntity<ReviewDto> addReview(@RequestBody ReviewDto reviewDto) {
+    @PostMapping("/add-review")
+    public ResponseEntity<ReviewDto> addReview(@Valid @RequestBody ReviewDto reviewDto) {
         ReviewDto addedReview = clientService.writeReview(reviewDto);
         return new ResponseEntity<>(addedReview, HttpStatus.CREATED);
     }

@@ -6,16 +6,16 @@ import com.servicebuddy.Entity.Ad;
 import com.servicebuddy.Entity.Booking;
 import com.servicebuddy.Entity.Users;
 import com.servicebuddy.Enum.BookingStatus;
-import com.servicebuddy.Exception.ImageProcessingException;
 import com.servicebuddy.Exception.ResourceNotFoundException;
 import com.servicebuddy.Repository.AdRepository;
 import com.servicebuddy.Repository.BookingRepository;
 import com.servicebuddy.Repository.UserRepository;
+import com.servicebuddy.Service.Utils.RedisService;
+import com.servicebuddy.Service.Utils.S3Service;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.List;
 
 
@@ -32,24 +32,28 @@ public class CompanyServiceImpl implements CompanyService {
     private BookingRepository bookingRepository;
 
     @Autowired
+    private S3Service s3Service ;
+
+    @Autowired
+    RedisService redisService;
+    private
+    @Autowired
     ModelMapper modelMapper;
+
+    private static final String ALL_ADS_CACHE_KEY="ALL_ADS";
 
     public AdDto postAd(Long userId, AdDto adDto) {
         Users user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("user not found"));
 
         Ad newAd = modelMapper.map(adDto, Ad.class);
 
-        try {
-            if ((adDto.getImg() != null) && !adDto.getImg().isEmpty()) {
-                newAd.setImg(adDto.getImg().getBytes());
-            }
-        } catch (IOException e) {
-            throw new ImageProcessingException("Error uploading the Image");
+        if ((adDto.getImg() != null) && !adDto.getImg().isEmpty()) {
+            newAd.setImgUrl(s3Service.uploadFile( adDto.getImg()));
         }
         newAd.setUser(user);
         AdDto newAdDto = modelMapper.map(adRepository.save(newAd), AdDto.class);
         newAdDto.setCompanyName(user.getName());
-        newAdDto.setImgResponse(newAd.getImg());
+        newAdDto.setImgUrl(newAd.getImgUrl());
         return newAdDto;
     }
 
@@ -57,20 +61,32 @@ public class CompanyServiceImpl implements CompanyService {
     public AdDto updateAd(AdDto adDto, Long adId) {
         Ad existingAd = adRepository.findById(adId).orElseThrow(() -> new ResourceNotFoundException("Ad not found"));
 
-        try {
-            if ((adDto.getImg() != null) && !adDto.getImg().isEmpty()) {
-                existingAd.setImg(adDto.getImg().getBytes());
-            }
-        } catch (IOException e) {
-            throw new ImageProcessingException("Error uploading the Image");
+        String oldImgUrl = existingAd.getImgUrl();
+        String oldImgName =  oldImgUrl.substring(oldImgUrl.lastIndexOf("/") + 1);
+
+        if ((adDto.getImg() != null) && !adDto.getImg().isEmpty()) {
+            s3Service.deleteFile(oldImgName);
+            existingAd.setImgUrl(s3Service.uploadFile(adDto.getImg()));
         }
 
         existingAd.setServiceName(adDto.getServiceName());
         existingAd.setDescription(adDto.getDescription());
         existingAd.setPrice(adDto.getPrice());
+
         AdDto updatedAdDto = modelMapper.map(adRepository.save(existingAd), AdDto.class);
         updatedAdDto.setCompanyName(existingAd.getUser().getName());
-        updatedAdDto.setImgResponse(existingAd.getImg());
+        updatedAdDto.setImgUrl(existingAd.getImgUrl());
+
+        // Update the cache
+        List<Ad> allAds = adRepository.findAll();
+        List<AdDto> adDtoList = allAds.stream().map(a -> {
+            AdDto dto = modelMapper.map(a, AdDto.class);
+            dto.setCompanyName(a.getUser().getName());
+            return dto;
+        }).toList();
+
+        redisService.setData(ALL_ADS_CACHE_KEY, adDtoList, 5);
+
         return updatedAdDto;
     }
 
@@ -85,7 +101,7 @@ public class CompanyServiceImpl implements CompanyService {
             return ads.stream().map(ad -> {
                 AdDto adDto = modelMapper.map(ad, AdDto.class);
                 adDto.setCompanyName(user.getName());
-                adDto.setImgResponse(ad.getImg());
+                adDto.setImgUrl(ad.getImgUrl());
                 return adDto;
             }).toList();
         }
@@ -96,7 +112,7 @@ public class CompanyServiceImpl implements CompanyService {
         Ad ad = adRepository.findById(adId).orElseThrow(() -> new ResourceNotFoundException("Ad not found"));
 
         AdDto adDto = modelMapper.map(ad, AdDto.class);
-        adDto.setImgResponse(ad.getImg());
+        adDto.setImgUrl(ad.getImgUrl());
         adDto.setCompanyName(ad.getUser().getName());
         return adDto;
     }
@@ -126,12 +142,18 @@ public class CompanyServiceImpl implements CompanyService {
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
         if (status.equalsIgnoreCase("APPROVE")) {
             booking.setBookingStatus(BookingStatus.APPROVED);
-        } else {
+
+        } else if(status.equalsIgnoreCase("COMPLETED")) {
+            //TODO: Implement otp system and verify from user the service is Completed or not ?
+
+            booking.setBookingStatus(BookingStatus.COMPLETED);
+        }
+        else {
             booking.setBookingStatus(BookingStatus.REJECTED);
         }
 
-        Booking uodatedBooking = bookingRepository.save(booking);
-        return uodatedBooking.getBookingStatus();
+        Booking updatedBooking = bookingRepository.save(booking);
+        return updatedBooking.getBookingStatus();
 
     }
 
