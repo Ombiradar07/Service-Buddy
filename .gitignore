@@ -36,8 +36,10 @@ build/
 
 ### Sensitive Files ###
 # Ignore application properties to avoid exposing credentials
+
 application.properties
 application-prod.properties
 application.yml
+
 # Environment-specific configuration files
 .env
