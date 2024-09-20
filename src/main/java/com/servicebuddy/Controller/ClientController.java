@@ -1,9 +1,6 @@
 package com.servicebuddy.Controller;
 
-import com.servicebuddy.DTO.AdDetailsForClientDto;
-import com.servicebuddy.DTO.AdDto;
-import com.servicebuddy.DTO.BookingDto;
-import com.servicebuddy.DTO.ReviewDto;
+import com.servicebuddy.DTO.*;
 import com.servicebuddy.Service.Client.ClientService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,23 +18,23 @@ public class ClientController {
     private ClientService clientService;
 
     @GetMapping("/ads")
-    public ResponseEntity<List<AdDto>> getAllAds() {
+    public ResponseEntity<List<AdResponseDto>> getAllAds() {
 
-        List<AdDto> allAds = clientService.getAllAds();
+        List<AdResponseDto> allAds = clientService.getAllAds();
         return new ResponseEntity<>(allAds, HttpStatus.OK);
 
     }
 
     @GetMapping("/search/{keyword}")
-    public ResponseEntity<List<AdDto>> searchAdsByName(@PathVariable String keyword) {
-        List<AdDto> searchResults = clientService.searchAdsByName(keyword);
+    public ResponseEntity<List<AdResponseDto>> searchAdsByName(@PathVariable String keyword) {
+        List<AdResponseDto> searchResults = clientService.searchAdsByName(keyword);
         return new ResponseEntity<>(searchResults, HttpStatus.OK);
     }
 
     @PostMapping("/book-service")
-    public ResponseEntity<BookingDto> bookService(@Valid @RequestBody BookingDto bookingDto) {
+    public ResponseEntity<BookingResponseDto> bookService(@Valid @RequestBody BookingRequestDto bookingRequestDto) {
 
-        BookingDto bookedService = clientService.bookService(bookingDto);
+        BookingResponseDto bookedService = clientService.bookService(bookingRequestDto);
         return new ResponseEntity<>(bookedService, HttpStatus.OK);
     }
 
@@ -48,15 +45,15 @@ public class ClientController {
     }
 
     @GetMapping("/bookings/{userId}")
-    public ResponseEntity<List<BookingDto>> getAllBookingsByUserId(@PathVariable Long userId) {
-        List<BookingDto> bookings = clientService.getAllBookingsByUserId(userId);
+    public ResponseEntity<List<BookingResponseDto>> getAllBookingsByUserId(@PathVariable Long userId) {
+        List<BookingResponseDto> bookings = clientService.getAllBookingsByUserId(userId);
         return new ResponseEntity<>(bookings, HttpStatus.OK);
 
     }
 
     @PostMapping("/add-review")
-    public ResponseEntity<ReviewDto> addReview(@Valid @RequestBody ReviewDto reviewDto) {
-        ReviewDto addedReview = clientService.writeReview(reviewDto);
+    public ResponseEntity<ReviewResponseDto> addReview(@Valid @RequestBody ReviewRequestDto reviewRequestDto) {
+        ReviewResponseDto addedReview = clientService.writeReview(reviewRequestDto);
         return new ResponseEntity<>(addedReview, HttpStatus.CREATED);
     }
 

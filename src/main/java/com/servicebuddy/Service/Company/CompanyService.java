@@ -1,25 +1,26 @@
 package com.servicebuddy.Service.Company;
 
 
-import com.servicebuddy.DTO.AdDto;
-import com.servicebuddy.DTO.BookingDto;
+import com.servicebuddy.DTO.AdResponseDto;
+import com.servicebuddy.DTO.AdRequestDto;
+import com.servicebuddy.DTO.BookingResponseDto;
 import com.servicebuddy.Enum.BookingStatus;
 
 import java.util.List;
 
 public interface CompanyService {
 
-    AdDto postAd(Long userId, AdDto adDto);
+    AdResponseDto postAd(Long userId, AdRequestDto adRequestDto);
 
-    AdDto updateAd(AdDto adDto , Long adId);
+    AdResponseDto updateAd(AdRequestDto adRequestDto , Long adId);
 
-    List<AdDto> getAllAdsByUserId(Long userId);
+    List<AdResponseDto> getAllAdsByUserId(Long userId);
 
-    AdDto getAdById(Long adId);
+    AdResponseDto getAdById(Long adId);
 
     void deleteAd(Long adId);
 
-    List<BookingDto> getAllBookings(Long companyId);
+    List<BookingResponseDto> getAllBookings(Long companyId);
 
     BookingStatus changeBookingStatus(Long bookingId, String status);
 

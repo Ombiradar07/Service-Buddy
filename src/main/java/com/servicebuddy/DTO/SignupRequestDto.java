@@ -10,7 +10,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class SignupDto {
+public class SignupRequestDto {
 
     @NotBlank(message = "Name is required")
     private String name;

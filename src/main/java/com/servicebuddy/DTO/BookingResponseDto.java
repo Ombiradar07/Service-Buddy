@@ -2,22 +2,19 @@ package com.servicebuddy.DTO;
 
 import com.servicebuddy.Enum.BookingStatus;
 import com.servicebuddy.Enum.ReviewStatus;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
 
 @Getter
 @Setter
-public class BookingDto {
+public class BookingResponseDto {
 
     private Long id;
 
-    @NotBlank( message = "Please enter a valid booking date.")
-    @DateTimeFormat(pattern = "dd-mm-yyyy")
+    @NotNull(message = "Please enter a valid booking date.")
     private Date bookingDate;
 
     private Long userId;

@@ -18,17 +18,28 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     @Autowired
-    private  CustomUserDetailsService customUserDetailsService;
+    private CustomUserDetailsService customUserDetailsService;
     @Autowired
-    private  JwtAuthenticationFilter jwtAuthenticationFilter;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+        String[] permitAllUrls = new String[]{
+                "/auth/**",
+                "/api/client/search/**",
+                "/api/client/ads",
+                "/v3/api-docs",
+                "/swagger-ui/**",
+                "/swagger-ui.html"
+
+        };
+
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(customizer -> customizer
-                        .requestMatchers("/auth/**","/api/client/search/**","/api/client/ads").permitAll()
+                        .requestMatchers(permitAllUrls).permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

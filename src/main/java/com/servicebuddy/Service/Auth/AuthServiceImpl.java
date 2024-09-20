@@ -1,8 +1,8 @@
 package com.servicebuddy.Service.Auth;
 
 import com.servicebuddy.Config.JwtUtils;
-import com.servicebuddy.DTO.LoginDto;
-import com.servicebuddy.DTO.SignupDto;
+import com.servicebuddy.DTO.LoginRequestDto;
+import com.servicebuddy.DTO.SignupRequestDto;
 import com.servicebuddy.DTO.UserDto;
 import com.servicebuddy.Entity.Users;
 import com.servicebuddy.Enum.UserRoles;
@@ -30,13 +30,13 @@ public class AuthServiceImpl implements AuthService {
     private JwtUtils jwtUtils;
 
     @Override
-    public UserDto registerClient(SignupDto signupDto) {
-        if (userRepository.findByEmail(signupDto.getEmail()).isPresent()) {
+    public UserDto registerClient(SignupRequestDto signupRequestDto) {
+        if (userRepository.findByEmail(signupRequestDto.getEmail()).isPresent()) {
             throw new UserAlreadyExistException("Email already exists!");
         }
 
-        Users user = modelMapper.map(signupDto, Users.class);
-        user.setPassword(passwordEncoder.encode(signupDto.getPassword()));
+        Users user = modelMapper.map(signupRequestDto, Users.class);
+        user.setPassword(passwordEncoder.encode(signupRequestDto.getPassword()));
         user.setRole(UserRoles.CLIENT);
 
         Users savedUser = userRepository.save(user);
@@ -44,13 +44,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public UserDto registerServiceProvider(SignupDto signupDto) {
-        if (userRepository.findByEmail(signupDto.getEmail()).isPresent()) {
+    public UserDto registerServiceProvider(SignupRequestDto signupRequestDto) {
+        if (userRepository.findByEmail(signupRequestDto.getEmail()).isPresent()) {
             throw new UserAlreadyExistException("Email already exists!");
         }
 
-        Users user = modelMapper.map(signupDto, Users.class);
-        user.setPassword(passwordEncoder.encode(signupDto.getPassword()));
+        Users user = modelMapper.map(signupRequestDto, Users.class);
+        user.setPassword(passwordEncoder.encode(signupRequestDto.getPassword()));
         user.setRole(UserRoles.SERVICE_PROVIDER);
 
         Users savedUser = userRepository.save(user);
@@ -58,11 +58,11 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public String authenticateUser(LoginDto loginDto) {
-        Users user = userRepository.findByEmailOrPhone(loginDto.getEmailOrPhone(),loginDto.getEmailOrPhone())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email or phone: " + loginDto.getEmailOrPhone()));
+    public String authenticateUser(LoginRequestDto loginRequestDto) {
+        Users user = userRepository.findByEmailOrPhone(loginRequestDto.getEmailOrPhone(), loginRequestDto.getEmailOrPhone())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email or phone: " + loginRequestDto.getEmailOrPhone()));
 
-        if (passwordEncoder.matches(loginDto.getPassword(), user.getPassword())) {
+        if (passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
             return jwtUtils.generateToken(user.getEmail());
         } else {
             throw new InvalidCredentialException("Invalid credentials");

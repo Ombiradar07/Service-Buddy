@@ -1,7 +1,8 @@
 package com.servicebuddy.Controller;
 
-import com.servicebuddy.DTO.AdDto;
-import com.servicebuddy.DTO.BookingDto;
+import com.servicebuddy.DTO.AdResponseDto;
+import com.servicebuddy.DTO.AdRequestDto;
+import com.servicebuddy.DTO.BookingResponseDto;
 import com.servicebuddy.Enum.BookingStatus;
 import com.servicebuddy.Service.Company.CompanyService;
 import jakarta.validation.Valid;
@@ -20,29 +21,29 @@ public class CompanyController {
     private CompanyService companyService;
 
     @PostMapping("/post-ad/{userId}")
-    public ResponseEntity<AdDto> postAd(@PathVariable Long userId, @Valid @ModelAttribute AdDto adDto) {
+    public ResponseEntity<AdResponseDto> postAd(@PathVariable Long userId, @Valid @ModelAttribute AdRequestDto request) {
 
-        AdDto savedDto = companyService.postAd(userId, adDto);
+        AdResponseDto savedDto = companyService.postAd(userId, request);
         return new ResponseEntity<>(savedDto, HttpStatus.CREATED);
     }
 
     @PutMapping("update-ad/{adId}")
-    public ResponseEntity<AdDto> updateAd(@PathVariable Long adId, @Valid @ModelAttribute AdDto adDto) {
-        AdDto updatedAd = companyService.updateAd(adDto, adId);
+    public ResponseEntity<AdResponseDto> updateAd(@PathVariable Long adId, @Valid @ModelAttribute AdRequestDto adRequestDto) {
+        AdResponseDto updatedAd = companyService.updateAd(adRequestDto, adId);
         return new ResponseEntity<>(updatedAd, HttpStatus.OK);
     }
 
     @GetMapping("get-all-ads/{userId}")
-    public ResponseEntity<List<AdDto>> getAllAdsByUserId(@PathVariable Long userId) {
-        List<AdDto> allAds = companyService.getAllAdsByUserId(userId);
+    public ResponseEntity<List<AdResponseDto>> getAllAdsByUserId(@PathVariable Long userId) {
+        List<AdResponseDto> allAds = companyService.getAllAdsByUserId(userId);
         return new ResponseEntity<>(allAds, HttpStatus.OK);
     }
 
     @GetMapping("/get-ad/{adId}")
-    public ResponseEntity<AdDto> getAdById(@PathVariable Long adId) {
-        AdDto adDto = companyService.getAdById(adId);
+    public ResponseEntity<AdResponseDto> getAdById(@PathVariable Long adId) {
+        AdResponseDto adResponseDto = companyService.getAdById(adId);
 
-        return new ResponseEntity<>(adDto, HttpStatus.OK);
+        return new ResponseEntity<>(adResponseDto, HttpStatus.OK);
     }
 
     @DeleteMapping("/delete-ad/{adId}")
@@ -52,8 +53,8 @@ public class CompanyController {
     }
 
     @GetMapping("/get-all-bookings/{companyId}")
-    public ResponseEntity<List<BookingDto>> getAllBookings(@PathVariable Long companyId) {
-        List<BookingDto> allBookings = companyService.getAllBookings(companyId);
+    public ResponseEntity<List<BookingResponseDto>> getAllBookings(@PathVariable Long companyId) {
+        List<BookingResponseDto> allBookings = companyService.getAllBookings(companyId);
         return new ResponseEntity<>(allBookings, HttpStatus.OK);
     }
 

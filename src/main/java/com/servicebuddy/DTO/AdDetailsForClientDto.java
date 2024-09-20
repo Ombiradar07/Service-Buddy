@@ -9,7 +9,7 @@ import java.util.List;
 @Setter
 public class AdDetailsForClientDto {
 
-    private AdDto adDto ;
+    private AdResponseDto adResponseDto;
 
-    private List<ReviewDto>  reviewDtoList;
+    private List<ReviewResponseDto> reviewResponseDtoList;
 }

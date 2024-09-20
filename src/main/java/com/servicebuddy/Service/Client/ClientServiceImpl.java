@@ -1,9 +1,6 @@
 package com.servicebuddy.Service.Client;
 
-import com.servicebuddy.DTO.AdDetailsForClientDto;
-import com.servicebuddy.DTO.AdDto;
-import com.servicebuddy.DTO.BookingDto;
-import com.servicebuddy.DTO.ReviewDto;
+import com.servicebuddy.DTO.*;
 import com.servicebuddy.Entity.Ad;
 import com.servicebuddy.Entity.Booking;
 import com.servicebuddy.Entity.Review;
@@ -16,8 +13,10 @@ import com.servicebuddy.Repository.AdRepository;
 import com.servicebuddy.Repository.BookingRepository;
 import com.servicebuddy.Repository.ReviewRepository;
 import com.servicebuddy.Repository.UserRepository;
+import com.servicebuddy.Service.Utils.EmailService;
 import com.servicebuddy.Service.Utils.RedisService;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,6 +25,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class ClientServiceImpl implements ClientService {
 
@@ -51,121 +51,144 @@ public class ClientServiceImpl implements ClientService {
         this.redisService = redisService;
     }
 
-    private static String ALL_ADS_CACHE_KEY = "ALL_ADS";
+    private static final String ALL_ADS_CACHE_KEY = "ALL_ADS";
 
+    @Autowired
+    private EmailService emailService;
 
-    public List<AdDto> getAllAds() {
-
-        List<AdDto> cachedAds = (List<AdDto>) redisService.getData(ALL_ADS_CACHE_KEY);
+    @Override
+    public List<AdResponseDto> getAllAds() {
+        log.info("Fetching all ads.");
+        List<AdResponseDto> cachedAds = (List<AdResponseDto>) redisService.getData(ALL_ADS_CACHE_KEY);
 
         if (cachedAds != null) {
-            // If cached, return the cached ads
+            log.info("Returning cached ads.");
             return cachedAds;
         } else {
-            // If cache is empty, fetch ads from the database
+            log.info("Fetching ads from the database.");
             List<Ad> allAds = adRepository.findAll();
-            List<AdDto> adDtoList = allAds.stream().map(ad -> {
-                AdDto adDto = modelMapper.map(ad, AdDto.class);
-                adDto.setCompanyName(ad.getUser().getName());
-                return adDto;
+            List<AdResponseDto> adResponseDtoList = allAds.stream().map(ad -> {
+                AdResponseDto adResponseDto = modelMapper.map(ad, AdResponseDto.class);
+                adResponseDto.setCompanyName(ad.getUser().getName());
+                return adResponseDto;
             }).collect(Collectors.toList());
 
-            // Cache the result in Redis with an expiration time (e.g., 60 minutes)
-            redisService.setData(ALL_ADS_CACHE_KEY, adDtoList, 60);
-
-            return adDtoList;
+            // Cache the result
+            redisService.setData(ALL_ADS_CACHE_KEY, adResponseDtoList, 60);
+            log.info("Ads fetched from database and cached.");
+            return adResponseDtoList;
         }
     }
 
-    public List<AdDto> searchAdsByName(String keyword) {
-
+    @Override
+    public List<AdResponseDto> searchAdsByName(String keyword) {
+        log.info("Searching ads by keyword: {}", keyword);
         return adRepository.searchByKeyword(keyword).stream().map(ad -> {
-            AdDto adDto = modelMapper.map(ad, AdDto.class);
-            adDto.setImgUrl(ad.getImgUrl());
-            adDto.setCompanyName(ad.getUser().getName());
-            return adDto;
+            AdResponseDto adResponseDto = modelMapper.map(ad, AdResponseDto.class);
+            adResponseDto.setImgUrl(ad.getImgUrl());
+            adResponseDto.setCompanyName(ad.getUser().getName());
+            return adResponseDto;
         }).toList();
     }
 
-    public BookingDto bookService(BookingDto bookingDto) {
-        Users user = userRepository.findById(bookingDto.getUserId()).orElseThrow(() -> new ResourceNotFoundException("User not found !!!"));
-        Ad ad = adRepository.findById(bookingDto.getAdId()).orElseThrow(() -> new ResourceNotFoundException("Ad not found !!!"));
+    @Override
+    public BookingResponseDto bookService(BookingRequestDto bookingRequestDto) {
+        log.info("Booking service for userId: {} and adId: {}", bookingRequestDto.getUserId(), bookingRequestDto.getAdId());
+        Users user = userRepository.findById(bookingRequestDto.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found !!!"));
+        Ad ad = adRepository.findById(bookingRequestDto.getAdId())
+                .orElseThrow(() -> new ResourceNotFoundException("Ad not found !!!"));
 
-        Booking booking = modelMapper.map(bookingDto, Booking.class);
-
-        booking.setBookingDate(bookingDto.getBookingDate());
+        Booking booking = new Booking();
+        booking.setBookingDate(bookingRequestDto.getBookingDate());
         booking.setBookingStatus(BookingStatus.PENDING);
         booking.setReviewStatus(ReviewStatus.FALSE);
         booking.setAd(ad);
         booking.setUser(user);
         booking.setCompany(ad.getUser());
 
-
-        BookingDto dto = modelMapper.map(bookingRepository.save(booking), BookingDto.class);
+        BookingResponseDto dto = modelMapper.map(bookingRepository.save(booking), BookingResponseDto.class);
         dto.setServiceName(ad.getServiceName());
-        return dto;
 
+        emailService.sendEmail(
+                booking.getUser().getEmail(),
+                "Your Service has been Successfully Booked",
+                String.format("Dear %s,\n\n\nYour service, %s, has been successfully booked by %s on %s.\n\nBest regards,\nThe ServiceBuddy Team",
+                        booking.getUser().getName(), ad.getServiceName(), user.getName(), booking.getBookingDate())
+        );
+
+        log.info("Service booked successfully for userId: {}", bookingRequestDto.getUserId());
+        return dto;
     }
 
+    @Override
     public AdDetailsForClientDto getAdDetailsById(Long adId) {
+        log.info("Fetching ad details for adId: {}", adId);
         Ad ad = adRepository.findById(adId).orElseThrow(() -> new ResourceNotFoundException("Ad not found !!!"));
 
-        AdDto adDto = modelMapper.map(ad, AdDto.class);
-        adDto.setImgUrl(ad.getImgUrl());
-        adDto.setCompanyName(ad.getUser().getName());
+        AdResponseDto adResponseDto = modelMapper.map(ad, AdResponseDto.class);
+        adResponseDto.setImgUrl(ad.getImgUrl());
+        adResponseDto.setCompanyName(ad.getUser().getName());
 
         AdDetailsForClientDto dto = new AdDetailsForClientDto();
-        dto.setAdDto(adDto);
+        dto.setAdResponseDto(adResponseDto);
 
         // Adding Reviews to the ads
         List<Review> reviewList = reviewRepository.findByAdId(adId);
-
-        dto.setReviewDtoList(reviewList.stream().map(review -> {
-            ReviewDto sampleDto = modelMapper.map(review, ReviewDto.class);
+        dto.setReviewResponseDtoList(reviewList.stream().map(review -> {
+            ReviewResponseDto sampleDto = modelMapper.map(review, ReviewResponseDto.class);
             sampleDto.setServiceName(ad.getServiceName());
             sampleDto.setBookingId(sampleDto.getBookingId());
             return sampleDto;
         }).toList());
+
+        log.info("Ad details fetched for adId: {}", adId);
         return dto;
     }
 
-    public List<BookingDto> getAllBookingsByUserId(Long userId) {
+    @Override
+    public List<BookingResponseDto> getAllBookingsByUserId(Long userId) {
+        log.info("Fetching all bookings for userId: {}", userId);
         return bookingRepository.findAllByUserId(userId).stream().map(booking -> {
-            BookingDto bookingDto = modelMapper.map(booking, BookingDto.class);
-            bookingDto.setServiceName(booking.getAd().getServiceName());
-            return bookingDto;
+            BookingResponseDto bookingResponseDto = modelMapper.map(booking, BookingResponseDto.class);
+            bookingResponseDto.setServiceName(booking.getAd().getServiceName());
+            return bookingResponseDto;
         }).toList();
     }
 
     @Transactional
-    public ReviewDto writeReview(ReviewDto reviewDto) {
+    @Override
+    public ReviewResponseDto writeReview(ReviewRequestDto reviewRequestDto) {
+        log.info("Writing review for bookingId: {}", reviewRequestDto.getBookingId());
 
-        Booking booking = bookingRepository.findById(reviewDto.getBookingId()).orElseThrow(() -> new ResourceNotFoundException("Booking not found!"));
+        Booking booking = bookingRepository.findById(reviewRequestDto.getBookingId())
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found!"));
+        Users user = userRepository.findById(reviewRequestDto.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
 
-        Users user = userRepository.findById(reviewDto.getUserId()).orElseThrow(() -> new ResourceNotFoundException("User not found!"));
-
-        // Check if the user is authorized to add a review
         if (!booking.getUser().getId().equals(user.getId()) && !booking.getBookingStatus().equals(BookingStatus.COMPLETED)) {
             throw new UnauthorizedAccessException("User not authorized to add review!");
         }
 
-        Review review = modelMapper.map(reviewDto, Review.class);
-
+        Review review = new Review();
         review.setReviewDate(new Date());
         review.setUser(user);
         review.setAd(booking.getAd());
+        review.setReview(reviewRequestDto.getReview());
+        review.setRating(reviewRequestDto.getRating());
+        review.setBooking(booking);
 
         review = reviewRepository.save(review);
 
         booking.setReviewStatus(ReviewStatus.TRUE);
         bookingRepository.save(booking);
 
-        ReviewDto dto = modelMapper.map(review, ReviewDto.class);
+        log.info("Review added successfully for bookingId: {}", reviewRequestDto.getBookingId());
+
+        ReviewResponseDto dto = modelMapper.map(review, ReviewResponseDto.class);
         dto.setServiceName(booking.getAd().getServiceName());
         dto.setBookingId(booking.getId());
+
         return dto;
     }
-
-
 }
-

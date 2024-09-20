@@ -6,15 +6,15 @@ import java.util.List;
 
 public interface ClientService {
 
-    List<AdDto> getAllAds();
+    List<AdResponseDto> getAllAds();
 
-    List<AdDto> searchAdsByName(String keyword);
+    List<AdResponseDto> searchAdsByName(String keyword);
 
-    BookingDto bookService(BookingDto bookingDto);
+    BookingResponseDto bookService(BookingRequestDto bookingRequestDto);
 
     AdDetailsForClientDto getAdDetailsById(Long adId);
 
-    List<BookingDto> getAllBookingsByUserId(Long userId);
+    List<BookingResponseDto> getAllBookingsByUserId(Long userId);
 
-    ReviewDto writeReview(ReviewDto reviewDto);
+    ReviewResponseDto writeReview(ReviewRequestDto reviewRequestDto);
 }
