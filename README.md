@@ -2,18 +2,19 @@
 
 ![Java](https://img.shields.io/badge/Java-17-blue)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.1.0-brightgreen.svg)
+![Spring Security](https://img.shields.io/badge/Spring%20Security-JWT-yellow)
+![MySQL](https://img.shields.io/badge/MySQL-Database-lightblue)
 ![Redis](https://img.shields.io/badge/Redis-Caching-red)
 ![AWS S3](https://img.shields.io/badge/AWS-S3-orange)
+![Hibernate](https://img.shields.io/badge/Hibernate-JPA-yellowgreen)
+![Swagger](https://img.shields.io/badge/Swagger-API%20Docs-green)
 
 ## Table of Contents
 
 - [Overview](#overview)
 - [Features](#features)
 - [Technologies Used](#technologies-used)
-- [Installation](#installation)
-- [API Endpoints](#api-endpoints)
-- [Database Schema](#database-schema)
-- [Caching and Image Storage](#caching-and-image-storage)
+- [How to Run](#how-to-run)
 - [License](#license)
 
 ## Overview
@@ -34,22 +35,28 @@ This backend is designed to handle all core business logic, persistence, and com
 
 ## Technologies Used
 
-- **Java 17**
-- **Spring Boot 3**
-- **Spring Security 6** (JWT-based authentication)
-- **Hibernate (JPA)**
-- **MySQL** (Database)
-- **Redis** (Caching)
-- **AWS S3** (Image storage)
-- **ModelMapper** (Object mapping)
-- **Swagger** (API documentation)
+- ![Java](https://img.shields.io/badge/Java-17-blue) **Java 17**
+- ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.1.0-brightgreen.svg) **Spring Boot 3**
+- ![Spring Security](https://img.shields.io/badge/Spring%20Security-JWT-yellow) **Spring Security 6** (JWT-based authentication)
+- ![Hibernate](https://img.shields.io/badge/Hibernate-JPA-yellowgreen) **Hibernate (JPA)**
+- ![MySQL](https://img.shields.io/badge/MySQL-Database-lightblue) **MySQL** (Database)
+- ![Redis](https://img.shields.io/badge/Redis-Caching-red) **Redis** (Caching)
+- ![AWS S3](https://img.shields.io/badge/AWS-S3-orange) **AWS S3** (Image storage)
+- ![ModelMapper](https://img.shields.io/badge/ModelMapper-Object%20Mapping-blue) **ModelMapper** (Object mapping)
+- ![Swagger](https://img.shields.io/badge/Swagger-API%20Docs-green) **Swagger** (API documentation)
 
-## Installation
+## How to Run
 
-### Prerequisites
+1. **Clone the repository**: `git clone https://github.com/your-repo/service-booking-system.git`
+2. **Database setup**: Set up **MySQL** and **Redis** instances on your local machine or a cloud service.
+3. **AWS S3 configuration**: Set up AWS S3 for image storage and configure the credentials in your `application.properties`.
+4. **Build and run**: Use Maven to build and run the application.
+    ```bash
+    mvn clean install
+    mvn spring-boot:run
+    ```
+5. **Swagger Documentation**: Navigate to `http://localhost:8080/swagger-ui.html` to access the API documentation.
 
-- Java 17+
-- Maven
-- MySQL
-- Redis
-- AWS S3 account for image storage
+## License
+
+This project is licensed under the [MIT License](LICENSE).
