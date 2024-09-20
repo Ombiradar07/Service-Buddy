@@ -30,10 +30,9 @@ public class SecurityConfig {
                 "/auth/**",
                 "/api/client/search/**",
                 "/api/client/ads",
-                "/v3/api-docs",
                 "/swagger-ui/**",
-                "/swagger-ui.html"
-
+                "/swagger-ui.html",
+                "/v3/api-docs/**"
         };
 
         return http
